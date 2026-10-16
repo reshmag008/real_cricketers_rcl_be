@@ -73,15 +73,122 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", async (roomId) => {
     socket.join(roomId);
-
-    const selectedPlayer = await models.players.findOne({
-      where: { profile_link: "1" },
-      order: [["updatedAt", "DESC"]],
-    });
-
-    io.to(roomId).emit("current_player", JSON.stringify(selectedPlayer));
   });
 });
+
+
+socket.on("place-bid", async ({ roomId, playerId, teamId, teamName, bidAmount }) => {
+
+    console.log("bidAmount in place bid=== ", bidAmount);
+
+    // const auction = await teams.getAuctionState(playerId);
+   
+    //   if (!auction || auction.status !== "BIDDING") {
+    //     return;
+    //   }
+
+    //   if (Date.now() >= auction.endsAt) {
+    //     return;
+    //   }
+     const nextBid = (bidAmount || 0) + 1000;
+
+    const newEndsAt = Date.now() + 20 * 1000;
+
+    io.to(roomId).emit("bid-updated", {
+      playerId,
+      teamId,
+      teamName,
+      currentBid: bidAmount,
+      endsAt: newEndsAt,
+      nextBid : nextBid,
+      status: "BIDDING"
+    });
+
+
+
+  // Validate and save the bid
+  await teams.addBidHistory({
+    player_id : playerId,
+    team_id : teamId,
+    team_name : teamName,
+    bid_amount : bidAmount
+  });
+
+  // Restart timer
+  
+
+  await teams.updateAuctionState({
+    playerId:playerId,
+    currentBid: bidAmount,
+    teamId: teamId,
+    teamName:teamName,
+    endsAt: newEndsAt
+  });
+
+  scheduleAuctionFinalization(roomId, playerId, newEndsAt,teamId,bidAmount);
+
+  // Tell ALL clients about the new bid + new timer
+  
+});
+
+
+
+  /* =========================
+     PLAYER SELECTED
+  ========================= */
+
+  socket.on("current_player", (data) => {
+    const roomId = data?.roomId || ROOM_ID;
+
+    io.to(roomId).emit("current_player", data);
+  });
+
+  /* =========================
+     AUCTION CALL
+  ========================= */
+
+  socket.on("auction-call", (data) => {
+    const roomId = data?.roomId || ROOM_ID;
+
+    io.to(roomId).emit("auction-call", data);
+  });
+
+  socket.on("team_call", (data) => {
+
+    console.log("team_call---")
+    const roomId = data?.roomId || ROOM_ID;
+
+    io.to(roomId).emit("team_call", data);
+  });
+
+  socket.on("player_sold", (data) => {
+
+    console.log("player_sold---")
+    const roomId = data?.roomId || ROOM_ID;
+
+    io.to(roomId).emit("player_sold", data);
+  });
+
+  socket.on("player_unsold", (data) => {
+
+    console.log("player_unsold---")
+    const roomId = data?.roomId || ROOM_ID;
+
+    io.to(roomId).emit("player_unsold", data);
+  });
+
+  
+
+
+
+
+
+
+
+
+
+
+
 
 
 
