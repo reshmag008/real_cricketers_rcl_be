@@ -7,6 +7,7 @@ const models = require("./models");
 const path = require('path');
 
 require("./config/db_connection");
+const ROOM_ID = 'kcc_auction_room'
 
 const app = express();
 
