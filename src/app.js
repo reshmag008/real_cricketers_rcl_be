@@ -74,68 +74,7 @@ io.on("connection", (socket) => {
   socket.on("join-room", async (roomId) => {
     socket.join(roomId);
   });
-});
 
-
-socket.on("place-bid", async ({ roomId, playerId, teamId, teamName, bidAmount }) => {
-
-    console.log("bidAmount in place bid=== ", bidAmount);
-
-    // const auction = await teams.getAuctionState(playerId);
-   
-    //   if (!auction || auction.status !== "BIDDING") {
-    //     return;
-    //   }
-
-    //   if (Date.now() >= auction.endsAt) {
-    //     return;
-    //   }
-     const nextBid = (bidAmount || 0) + 1000;
-
-    const newEndsAt = Date.now() + 20 * 1000;
-
-    io.to(roomId).emit("bid-updated", {
-      playerId,
-      teamId,
-      teamName,
-      currentBid: bidAmount,
-      endsAt: newEndsAt,
-      nextBid : nextBid,
-      status: "BIDDING"
-    });
-
-
-
-  // Validate and save the bid
-  await teams.addBidHistory({
-    player_id : playerId,
-    team_id : teamId,
-    team_name : teamName,
-    bid_amount : bidAmount
-  });
-
-  // Restart timer
-  
-
-  await teams.updateAuctionState({
-    playerId:playerId,
-    currentBid: bidAmount,
-    teamId: teamId,
-    teamName:teamName,
-    endsAt: newEndsAt
-  });
-
-  scheduleAuctionFinalization(roomId, playerId, newEndsAt,teamId,bidAmount);
-
-  // Tell ALL clients about the new bid + new timer
-  
-});
-
-
-
-  /* =========================
-     PLAYER SELECTED
-  ========================= */
 
   socket.on("current_player", (data) => {
     const roomId = data?.roomId || ROOM_ID;
@@ -177,30 +116,77 @@ socket.on("place-bid", async ({ roomId, playerId, teamId, teamName, bidAmount })
     io.to(roomId).emit("player_unsold", data);
   });
 
+
+
+});
+
+
+// socket.on("place-bid", async ({ roomId, playerId, teamId, teamName, bidAmount }) => {
+
+//     console.log("bidAmount in place bid=== ", bidAmount);
+
+//     // const auction = await teams.getAuctionState(playerId);
+   
+//     //   if (!auction || auction.status !== "BIDDING") {
+//     //     return;
+//     //   }
+
+//     //   if (Date.now() >= auction.endsAt) {
+//     //     return;
+//     //   }
+//      const nextBid = (bidAmount || 0) + 1000;
+
+//     const newEndsAt = Date.now() + 20 * 1000;
+
+//     io.to(roomId).emit("bid-updated", {
+//       playerId,
+//       teamId,
+//       teamName,
+//       currentBid: bidAmount,
+//       endsAt: newEndsAt,
+//       nextBid : nextBid,
+//       status: "BIDDING"
+//     });
+
+
+
+//   // Validate and save the bid
+//   await teams.addBidHistory({
+//     player_id : playerId,
+//     team_id : teamId,
+//     team_name : teamName,
+//     bid_amount : bidAmount
+//   });
+
+//   // Restart timer
   
 
+//   await teams.updateAuctionState({
+//     playerId:playerId,
+//     currentBid: bidAmount,
+//     teamId: teamId,
+//     teamName:teamName,
+//     endsAt: newEndsAt
+//   });
+
+//   scheduleAuctionFinalization(roomId, playerId, newEndsAt,teamId,bidAmount);
+
+//   // Tell ALL clients about the new bid + new timer
+  
+// });
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-/* =======================
-   START SERVER
-   ======================= */
+  /* =========================
+     PLAYER SELECTED
+  ========================= */
 const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+  
+
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "my_verify_token";
 
